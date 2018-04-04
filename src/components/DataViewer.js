@@ -80,9 +80,21 @@ class DataViewer extends Component {
             }
         }
         catch (err) {
+            const errString = err.toString();
             let { docError } = this.state;
-            docError[comp.docid] = err.toString();
+            docError[comp.docid] = errString;
             this.setState({docError});
+
+            const positionIndex = errString.indexOf('position');
+            if (positionIndex !== -1 && positionIndex + 9 < errString.length) {
+                const numberString = errString.substr(positionIndex + 9);
+                if (numberString.length > 0) {
+                    const number = parseInt(numberString);
+                    this.refs['textarea-' + comp.docid].focus();
+                    this.refs['textarea-' + comp.docid].ref.selectionStart = number;
+                    this.refs['textarea-' + comp.docid].ref.selectionEnd = number;
+                }
+            }
         }
     };
 
@@ -135,6 +147,7 @@ class DataViewer extends Component {
                 <Sidebar.Pusher>
                     <Segment fluid loading = {this.state.docLoading[docIndex]} className = 'doc-segment'>
                         <TextArea autoHeight
+                            ref = {'textarea-' + docIndex}
                             docid = {docIndex}
                             className = 'doc-textarea'
                             spellcheck = 'false'

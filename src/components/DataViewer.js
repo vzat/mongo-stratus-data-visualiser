@@ -1,79 +1,156 @@
 import React, { Component } from 'react';
 
-import { Input, Accordion } from 'semantic-ui-react'
+import { Input, Accordion, TextArea, Container, Segment, Sidebar, Menu, Button, Message } from 'semantic-ui-react'
 
 class DataViewer extends Component {
-    getArrays = (docs) => {
-        let result = [];
-
-        for (const docNo in docs) {
-            const doc = docs[docNo];
-
-            if (doc instanceof Array) {
-                result.push(this.getArrays(doc));
-            }
-            else if (doc instanceof Object) {
-                result.push(this.getFields(doc));
-            }
-            else {
-                result.push(<div> { doc } </div>)
-            }
-        }
-
-        return result;
+    state = {
+        docs: [],
+        sidebar: [],
+        docLoading: [],
+        docError: []
     };
 
-    getFields = (doc) => {
-        let result = [];
-
-        for (const fieldNo in Object.keys(doc)) {
-              const field = Object.keys(doc)[fieldNo];
-              const value = doc[field];
-
-              // Array
-              if (value instanceof Array) {
-                  this.getArrays(value);
-              }
-              else if (value instanceof Object) {
-                  // console.log(value);
-                  // Reference https://github.com/facebook/react/issues/1545
-                  // Display curly brackets in html component
-                  // result.push(<div> <strong> {field}: </strong> {'{'} {this.getFields(value)} {'}'} </div>);
-                  result.push(<Accordion.Accordion>);
-                      result.push(<Accordion.Title> {field} </Accordion.Title>);
-                      result.push( {this.getFields(value)} );
-                  result.push(</Accordion.Accordion>);
-              }
-              else {
-                  // Plain field
-                  result.push(
-                      <div>
-                          <strong> {field}: </strong> <Input transparent type = 'text' value = {value} > <input size = {value.toString().length} /> </Input>
-                      </div>
-                  );
-              }
+    getDocs = (propDocs) => {
+        let docs = [];
+        let sidebar = [];
+        let docLoading = [];
+        let docError = [];
+        for (const propDocNo in propDocs) {
+            docs.push(JSON.stringify(propDocs[propDocNo], null, 4));
+            sidebar.push(false);
+            docLoading.push(false);
+            docError.push('');
         }
+        this.setState({docs});
+        this.setState({sidebar});
+        this.setState({docLoading});
+        this.setState({docError});
+    };
 
-        return result;
+    componentDidMount = () => {
+          this.getDocs(this.props.docs);
+    };
+
+    componentWillReceiveProps = (nextProps) => {
+          if (this.props.docs !== nextProps.docs) {
+                this.getDocs(nextProps.docs);
+          }
     }
 
+    changeDoc = async (event, comp) => {
+        let { docs } = this.state;
+        let { sidebar } = this.state;
+
+        const docIndex = comp.docid;
+        if (docIndex >= 0 && docIndex < docs.length) {
+            docs[docIndex] = comp.value;
+            sidebar[docIndex] = true;
+        }
+
+        this.setState({docs});
+        this.setState({sidebar});
+    };
+
+    saveDoc = async (event, comp) => {
+        try {
+            const { docs } = this.state;
+            let { docLoading } = this.state;
+
+            const docIndex = comp.docid;
+            if (docIndex >= 0 && docIndex < docs.length) {
+                const json = docs[docIndex];
+
+                const doc = await JSON.parse(json);
+
+                // Show the doc is loading
+                docLoading[docIndex] = true;
+                this.setState({docLoading});
+
+                await this.props.setDoc(doc, docIndex);
+
+                // Stop loading, hide sidebar, and hide error
+                let { sidebar } = this.state;
+                let { docError } = this.state;
+                sidebar[docIndex] = false;
+                docError[docIndex] = '';
+                docLoading[docIndex] = false;
+                this.setState({sidebar});
+                this.setState({docLoading});
+                this.setState({docError});
+            }
+        }
+        catch (err) {
+            let { docError } = this.state;
+            docError[comp.docid] = err.toString();
+            this.setState({docError});
+        }
+    };
+
+    revertDoc = async (event, comp) => {
+        let { docs } = this.state;
+        let { sidebar } = this.state;
+        let { docError } = this.state;
+        const propDocs = this.props.docs;
+
+        const docIndex = comp.docid;
+        if (docIndex >= 0 && docIndex < docs.length) {
+            docs[docIndex] = JSON.stringify(propDocs[docIndex], null, 4);
+            sidebar[docIndex] = false;
+            docError[docIndex] = '';
+
+            this.setState({docs});
+            this.setState({sidebar});
+            this.setState({docError});
+        }
+
+    };
+
     render() {
-        const { docs } = this.props;
-
-
+        const { docs } = this.state;
 
         const docsList = docs.map((doc, docIndex) => (
-            <div>
-                <Accordion>
-                    <Accordion.Title> {docIndex} </Accordion.Title>
-                    <Accordion.Content> { this.getFields(doc) } </Accordion.Content>
-                </Accordion>
-            </div>
+            <Sidebar.Pushable as = {Segment}>
+                <Sidebar as = {Menu}
+                    animation = 'overlay'
+                    width = 'thin'
+                    direction = 'right'
+                    visible = {this.state.sidebar[docIndex]}
+                    vertical
+                    borderless >
+                        <Menu.Item>
+                            <Button fluid docid = {docIndex} color = 'green' onClick = {this.saveDoc}> Save </Button>
+                        </Menu.Item>
+                        <Menu.Item>
+                            <Button fluid docid = {docIndex} color = 'red' onClick = {this.revertDoc}> Revert </Button>
+                        </Menu.Item>
+                        {
+                            this.state.docError[docIndex] &&
+                            <Menu.Item>
+                                <Message negative size = 'small'>
+                                    { this.state.docError[docIndex] }
+                                </Message>
+                            </Menu.Item>
+                        }
+                </Sidebar>
+                <Sidebar.Pusher>
+                    <Segment fluid loading = {this.state.docLoading[docIndex]} className = 'doc-segment'>
+                        <TextArea autoHeight
+                            docid = {docIndex}
+                            className = 'doc-textarea'
+                            spellcheck = 'false'
+                            value = {this.state.docs[docIndex]}
+                            onChange = {this.changeDoc}
+                        />
+                    </Segment>
+                </Sidebar.Pusher>
+            </Sidebar.Pushable>
         ));
 
         return (
             <div className="DataViewer">
-                { docsList }
+                <Segment.Group>
+                    { docsList }
+                </Segment.Group>
             </div>
         );
     }

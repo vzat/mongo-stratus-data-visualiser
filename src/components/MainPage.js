@@ -47,6 +47,15 @@ class MainPage extends Component {
         this.setState({sidebar: !this.state.sidebar});
     }
 
+    setDoc = (doc, index) => {
+        let { docs } = this.state;
+        
+        if (index >= 0 && index < docs.length) {
+            docs[index] = doc;
+            this.setState({docs});
+        }
+    }
+
     render() {
         return (
             <div className="MainPage">
@@ -74,6 +83,7 @@ class MainPage extends Component {
                           <Segment className = 'data-content'>
                               <DataViewer
                                   docs = {this.state.docs}
+                                  setDoc = {this.setDoc}
                               />
                           </Segment>
                       </Grid.Column>

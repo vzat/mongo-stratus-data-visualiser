@@ -7,3 +7,19 @@
 .data-content {
     width: calc(100vw - 275px);
 }
+
+.doc-textarea {
+    width: calc(100% - 150px);
+    border: none;
+    outline: none;
+    font-family: monospace;
+    min-height: 100px;
+}
+
+.doc-segment:hover .doc-textarea, .doc-segment:hover {
+    background-color: #e6e6e6;
+}
+
+.doc-textarea:focus {
+    color: green;
+}

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import classNames from 'classnames';
 
 import { Input, Accordion, TextArea, Container, Segment, Sidebar, Menu, Button, Message } from 'semantic-ui-react'
 
@@ -7,7 +8,9 @@ class DataViewer extends Component {
         docs: [],
         sidebar: [],
         docLoading: [],
-        docError: []
+        docError: [],
+        modifiedDocs: [],
+        selectedDoc: undefined
     };
 
     getDocs = (propDocs) => {
@@ -15,16 +18,19 @@ class DataViewer extends Component {
         let sidebar = [];
         let docLoading = [];
         let docError = [];
+        let modifiedDocs = [];
         for (const propDocNo in propDocs) {
             docs.push(JSON.stringify(propDocs[propDocNo], null, 4));
             sidebar.push(false);
             docLoading.push(false);
             docError.push('');
+            modifiedDocs.push(false);
         }
         this.setState({docs});
         this.setState({sidebar});
         this.setState({docLoading});
         this.setState({docError});
+        this.setState({modifiedDocs});
     };
 
     componentDidMount = () => {
@@ -39,16 +45,19 @@ class DataViewer extends Component {
 
     changeDoc = async (event, comp) => {
         let { docs } = this.state;
-        let { sidebar } = this.state;
+        let { modifiedDocs } = this.state;
+        // let { sidebar } = this.state;
 
         const docIndex = comp.docid;
         if (docIndex >= 0 && docIndex < docs.length) {
             docs[docIndex] = comp.value;
-            sidebar[docIndex] = true;
+            modifiedDocs[docIndex] = true;
+            // sidebar[docIndex] = true;
         }
 
         this.setState({docs});
-        this.setState({sidebar});
+        this.setState({modifiedDocs});
+        // this.setState({sidebar});
     };
 
     saveDoc = async (event, comp) => {
@@ -71,12 +80,18 @@ class DataViewer extends Component {
                 // Stop loading, hide sidebar, and hide error
                 let { sidebar } = this.state;
                 let { docError } = this.state;
+                let { modifiedDocs } = this.state;
+
                 sidebar[docIndex] = false;
                 docError[docIndex] = '';
                 docLoading[docIndex] = false;
+                modifiedDocs[docIndex] = false;
+
                 this.setState({sidebar});
                 this.setState({docLoading});
                 this.setState({docError});
+                this.setState({modifiedDocs});
+                this.setState({selectedDoc: undefined});
             }
         }
         catch (err) {
@@ -102,6 +117,7 @@ class DataViewer extends Component {
         let { docs } = this.state;
         let { sidebar } = this.state;
         let { docError } = this.state;
+        let { modifiedDocs } = this.state;
         const propDocs = this.props.docs;
 
         const docIndex = comp.docid;
@@ -109,16 +125,56 @@ class DataViewer extends Component {
             docs[docIndex] = JSON.stringify(propDocs[docIndex], null, 4);
             sidebar[docIndex] = false;
             docError[docIndex] = '';
+            modifiedDocs[docIndex] = false;
 
             this.setState({docs});
             this.setState({sidebar});
             this.setState({docError});
+            this.setState({modifiedDocs});
+            this.setState({selectedDoc: undefined});
         }
+    };
 
+    showSidebar = (docIndex) => {
+        let { sidebar } = this.state
+        if (docIndex >= 0 && docIndex < sidebar.length) {
+            for (let sidebarNo = 0 ; sidebarNo < sidebar.length ; sidebarNo ++) {
+                sidebar[sidebarNo] = false;
+            }
+            sidebar[docIndex] = true;
+            this.setState({sidebar});
+            this.setState({selectedDoc: docIndex});
+        }
+    };
+
+    hideSidebar = (docIndex) => {
+        let { sidebar } = this.state
+        if (docIndex >= 0 && docIndex < sidebar.length) {
+            sidebar[docIndex] = false;
+            this.setState({sidebar});
+            this.setState({selectedDoc: undefined});
+        }
     };
 
     render() {
         const { docs } = this.state;
+
+        const textAreaClasses = docs.map((doc, docIndex) => {
+            return classNames({
+                'doc-textarea': true,
+                'doc-textarea-default': this.state.selectedDoc !== docIndex,
+                'doc-textarea-selected': this.state.selectedDoc === docIndex,
+                'doc-textarea-modified': this.state.modifiedDocs[docIndex]
+            });
+        });
+
+        const segmentClasses = docs.map((doc, docIndex) => {
+            return classNames({
+                'doc-segment': true,
+                'doc-segment-default': this.state.selectedDoc !== docIndex,
+                'doc-segment-selected': this.state.selectedDoc === docIndex
+            })
+        });
 
         const docsList = docs.map((doc, docIndex) => (
             <Sidebar.Pushable as = {Segment}>
@@ -130,10 +186,29 @@ class DataViewer extends Component {
                     vertical
                     borderless >
                         <Menu.Item>
-                            <Button fluid docid = {docIndex} color = 'green' onClick = {this.saveDoc}> Save </Button>
+                            <Button fluid
+                                disabled = {!this.state.modifiedDocs[docIndex]}
+                                docid = {docIndex}
+                                color = 'green'
+                                onClick = {this.saveDoc}>
+                                    Save
+                            </Button>
                         </Menu.Item>
                         <Menu.Item>
-                            <Button fluid docid = {docIndex} color = 'red' onClick = {this.revertDoc}> Revert </Button>
+                            <Button fluid
+                                disabled = {!this.state.modifiedDocs[docIndex]}
+                                docid = {docIndex}
+                                color = 'red'
+                                onClick = {this.revertDoc}>
+                                    Revert
+                            </Button>
+                        </Menu.Item>
+                        <Menu.Item>
+                            <Button fluid
+                                docid = {docIndex}
+                                onClick = {() => {this.hideSidebar(docIndex)}}>
+                                    Hide
+                            </Button>
                         </Menu.Item>
                         {
                             this.state.docError[docIndex] &&
@@ -145,14 +220,15 @@ class DataViewer extends Component {
                         }
                 </Sidebar>
                 <Sidebar.Pusher>
-                    <Segment fluid loading = {this.state.docLoading[docIndex]} className = 'doc-segment'>
+                    <Segment fluid loading = {this.state.docLoading[docIndex]} className = {segmentClasses[docIndex]}>
                         <TextArea autoHeight
                             ref = {'textarea-' + docIndex}
                             docid = {docIndex}
-                            className = 'doc-textarea'
+                            className = {textAreaClasses[docIndex]}
                             spellcheck = 'false'
                             value = {this.state.docs[docIndex]}
                             onChange = {this.changeDoc}
+                            onFocus = {() => {this.showSidebar(docIndex)}}
                         />
                     </Segment>
                 </Sidebar.Pusher>

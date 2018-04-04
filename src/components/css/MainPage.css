@@ -16,10 +16,26 @@
     min-height: 100px;
 }
 
-.doc-segment:hover .doc-textarea, .doc-segment:hover {
+.doc-textarea-default {
+    cursor: pointer;
+}
+
+.doc-textarea-selected {
+    cursor: text;
+}
+
+.doc-textarea-modified {
+    color: green;
+}
+
+.doc-segment-default:hover .doc-textarea-default, .doc-segment-default:hover {
+    background-color: #e6e6e6;
+}
+
+/* .doc-segment:hover .doc-textarea, .doc-segment:hover {
     background-color: #e6e6e6;
 }
 
 .doc-textarea:focus {
     color: green;
-}
+} */

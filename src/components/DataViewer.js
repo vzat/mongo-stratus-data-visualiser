@@ -20,7 +20,7 @@ class DataViewer extends Component {
         let docError = [];
         let modifiedDocs = [];
         for (const propDocNo in propDocs) {
-            docs.push(JSON.stringify(propDocs[propDocNo], null, 4));
+            docs.push(JSON.stringify(propDocs[propDocNo], null, '\t'));
             sidebar.push(false);
             docLoading.push(false);
             docError.push('');
@@ -47,18 +47,15 @@ class DataViewer extends Component {
     changeDoc = async (event, comp) => {
         let { docs } = this.state;
         let { modifiedDocs } = this.state;
-        // let { sidebar } = this.state;
 
         const docIndex = comp.docid;
         if (docIndex >= 0 && docIndex < docs.length) {
             docs[docIndex] = comp.value;
             modifiedDocs[docIndex] = true;
-            // sidebar[docIndex] = true;
         }
 
         this.setState({docs});
         this.setState({modifiedDocs});
-        // this.setState({sidebar});
     };
 
     saveDoc = async (event, comp) => {
@@ -71,6 +68,7 @@ class DataViewer extends Component {
                 const json = docs[docIndex];
 
                 const doc = await JSON.parse(json);
+                console.log(doc);
 
                 // Show the doc is loading
                 docLoading[docIndex] = true;
@@ -124,12 +122,12 @@ class DataViewer extends Component {
         const docIndex = comp.docid;
         if (docIndex >= 0 && docIndex < docs.length) {
             if (docIndex < propDocs.length) {
-                docs[docIndex] = JSON.stringify(propDocs[docIndex], null, 4);
+                docs[docIndex] = JSON.stringify(propDocs[docIndex], null, '\t');
                 modifiedDocs[docIndex] = false;
                 this.setState({modifiedDocs});
             }
             else {
-                docs[docIndex] = JSON.stringify({}, null, 4);
+                docs[docIndex] = JSON.stringify({}, null, '\t');
             }
             // sidebar[docIndex] = false;
             docError[docIndex] = '';
@@ -184,7 +182,119 @@ class DataViewer extends Component {
 
         docLoading[comp.docid] = false;
         this.setState({docLoading});
-    }
+    };
+
+    // https://stackoverflow.com/questions/35888205/prevent-react-from-capturing-tab-character
+    // Capture tab and insert it to the document
+    handleKeyDown = (event, comp) => {
+        if (event.key === 'Tab') {
+            event.preventDefault();
+
+            let { docs } = this.state;
+            const { selectedDoc } = this.state;
+            if (selectedDoc >= 0 && selectedDoc < docs.length) {
+                const selectionStart = this.refs['textarea-' + selectedDoc].ref.selectionStart;
+                const selectionEnd = this.refs['textarea-' + selectedDoc].ref.selectionEnd;
+
+                // Add tab into textfield
+                const doc = docs[selectedDoc];
+                docs[selectedDoc] = doc.substring(0, selectionStart) + '\t' + doc.substring(selectionEnd);
+
+                this.setState({docs}, () => {
+                    // Change selection start and end after the state changed
+                    this.refs['textarea-' + selectedDoc].ref.selectionStart = selectionStart + 1;
+                    this.refs['textarea-' + selectedDoc].ref.selectionEnd = selectionStart + 1;
+                });
+            }
+        }
+        if (event.key === '{') {
+            let { docs } = this.state;
+            const { selectedDoc } = this.state;
+            if (selectedDoc >= 0 && selectedDoc < docs.length) {
+                const selectionStart = this.refs['textarea-' + selectedDoc].ref.selectionStart;
+                const selectionEnd = this.refs['textarea-' + selectedDoc].ref.selectionEnd;
+
+                const doc = docs[selectedDoc];
+                docs[selectedDoc] = doc.substring(0, selectionStart) + '{}' + doc.substring(selectionEnd);
+
+                this.setState({docs}, () => {
+                    // Change selection start and end after the state changed
+                    this.refs['textarea-' + selectedDoc].ref.selectionStart = selectionStart + 1;
+                    this.refs['textarea-' + selectedDoc].ref.selectionEnd = selectionStart + 1;
+                });
+
+                event.preventDefault();
+            }
+        }
+        if (event.key === '[') {
+            let { docs } = this.state;
+            const { selectedDoc } = this.state;
+            if (selectedDoc >= 0 && selectedDoc < docs.length) {
+                const selectionStart = this.refs['textarea-' + selectedDoc].ref.selectionStart;
+                const selectionEnd = this.refs['textarea-' + selectedDoc].ref.selectionEnd;
+
+                const doc = docs[selectedDoc];
+                docs[selectedDoc] = doc.substring(0, selectionStart) + '[]' + doc.substring(selectionEnd);
+
+                this.setState({docs}, () => {
+                    // Change selection start and end after the state changed
+                    this.refs['textarea-' + selectedDoc].ref.selectionStart = selectionStart + 1;
+                    this.refs['textarea-' + selectedDoc].ref.selectionEnd = selectionStart + 1;
+                });
+
+                event.preventDefault();
+            }
+        }
+        if (event.keyCode === 13) {
+            let { docs } = this.state;
+            const { selectedDoc } = this.state;
+            if (selectedDoc >= 0 && selectedDoc < docs.length) {
+                const selectionStart = this.refs['textarea-' + selectedDoc].ref.selectionStart;
+                const selectionEnd = this.refs['textarea-' + selectedDoc].ref.selectionEnd;
+
+                const doc = docs[selectedDoc];
+                const firstPartDoc = doc.substring(0, selectionStart);
+                const lines = firstPartDoc.split('\n');
+
+                // Get number of tabs from previous line
+                let noTabs = 0;
+                if (lines.length > 0) {
+                    const lastLine = lines[lines.length - 1];
+                    let tabPos = lastLine.indexOf('\t');
+
+                    while (tabPos !== -1 && tabPos + 1 < lastLine.length) {
+                        noTabs ++;
+                        tabPos = lastLine.indexOf('\t', tabPos + 1);
+                    }
+                }
+
+                let tabString = '';
+                for (let tabNo = 0 ; tabNo < noTabs ; tabNo ++) {
+                    tabString += '\t';
+                }
+
+                let newLineString = '';
+                if (selectionStart > 0 && selectionStart < doc.length) {
+                    if ((doc.charAt(selectionStart - 1) === '{' && doc.charAt(selectionStart) === '}') ||
+                        (doc.charAt(selectionStart - 1) === '[' && doc.charAt(selectionStart) === ']')) {
+                            newLineString = '\n' + tabString;
+                            noTabs ++;
+                            tabString += '\t';
+                    }
+                }
+
+                docs[selectedDoc] = doc.substring(0, selectionStart) + '\n' + tabString + newLineString + doc.substring(selectionEnd);
+
+                this.setState({docs}, () => {
+                    // Change selection start and end after the state changed
+                    this.refs['textarea-' + selectedDoc].ref.selectionStart = selectionStart + noTabs + 1;
+                    this.refs['textarea-' + selectedDoc].ref.selectionEnd = selectionStart + noTabs + 1;
+                });
+
+                event.preventDefault();
+            }
+        }
+    };
 
     render() {
         const { docs } = this.state;
@@ -268,6 +378,7 @@ class DataViewer extends Component {
                             spellcheck = 'false'
                             value = {this.state.docs[docIndex]}
                             onChange = {this.changeDoc}
+                            onKeyDown = {this.handleKeyDown}
                             onFocus = {() => {this.showSidebar(docIndex)}}
                         />
                         {

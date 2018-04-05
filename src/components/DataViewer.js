@@ -123,15 +123,21 @@ class DataViewer extends Component {
 
         const docIndex = comp.docid;
         if (docIndex >= 0 && docIndex < docs.length) {
-            docs[docIndex] = JSON.stringify(propDocs[docIndex], null, 4);
+            if (docIndex < propDocs.length) {
+                docs[docIndex] = JSON.stringify(propDocs[docIndex], null, 4);
+                modifiedDocs[docIndex] = false;
+                this.setState({modifiedDocs});
+            }
+            else {
+                docs[docIndex] = JSON.stringify({}, null, 4);
+            }
             // sidebar[docIndex] = false;
             docError[docIndex] = '';
-            modifiedDocs[docIndex] = false;
 
             this.setState({docs});
             // this.setState({sidebar});
             this.setState({docError});
-            this.setState({modifiedDocs});
+
             // this.setState({selectedDoc: undefined});
         }
     };
@@ -155,6 +161,17 @@ class DataViewer extends Component {
             this.setState({sidebar});
             this.setState({selectedDoc: undefined});
         }
+    };
+
+    addDocument = () => {
+       let { state } = this;
+       state.docs.push(JSON.stringify({}, null, 4));
+       state.sidebar.push(false);
+       state.docLoading.push(false);
+       state.docError.push('');
+       state.modifiedDocs.push(true);
+
+       this.setState(state);
     };
 
     render() {
@@ -259,6 +276,11 @@ class DataViewer extends Component {
                 <Segment.Group>
                     { docsList }
                 </Segment.Group>
+                <Button fluid basic
+                    color = 'green'
+                    icon = 'plus'
+                    onClick = {() => this.addDocument()}
+                />
             </div>
         );
     }

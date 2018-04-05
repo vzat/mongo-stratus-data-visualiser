@@ -169,8 +169,27 @@ class MainPage extends Component {
         }
     };
 
-    deleteDocument = () => {
+    removeDocument = async (docid) => {
+        if (this.props.username) {
+            const username = this.props.username;
+            const instanceName = this.props.match.params.instanceName;
+            const databaseName = this.props.match.params.databaseName;
+            const collectionName = this.state.activeMenuItem;
 
+            let id;
+            if (this.state.docs && this.state.docs.length > docid) {
+                id = this.state.docs[docid]._id;
+            }
+            else {
+                return;
+            }
+
+            const res = await db.delete('/api/v1/' + username + '/' + instanceName + '/' + databaseName + '/' + collectionName + '/documents', JSON.stringify({ids: [id]}));
+
+            if (res.ok && res.ok === 1) {
+                this.getDocuments(username, instanceName, databaseName, collectionName);
+            }
+        }
     };
 
     render() {
@@ -245,6 +264,7 @@ class MainPage extends Component {
                                 docs = {this.state.docs}
                                 setDoc = {this.setDoc}
                                 insertDocument = {this.insertDocument}
+                                removeDocument = {this.removeDocument}
                                 fetchingDocs = {this.state.fetchingDocs}
                             />
                         </div>

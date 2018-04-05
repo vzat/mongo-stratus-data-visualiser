@@ -165,15 +165,11 @@ class DataViewer extends Component {
 
     addDocument = () => {
        this.props.insertDocument({});
-       // let { state } = this;
-       // state.docs.push(JSON.stringify({}, null, 4));
-       // state.sidebar.push(false);
-       // state.docLoading.push(false);
-       // state.docError.push('');
-       // state.modifiedDocs.push(true);
-       //
-       // this.setState(state);
     };
+
+    removeDocument = (event, comp) => {
+        this.props.removeDocument(comp.docid);
+    }
 
     render() {
         const { docs } = this.state;
@@ -232,7 +228,7 @@ class DataViewer extends Component {
                                 labelPosition = 'left'
                                 docid = {docIndex}
                                 color = 'red'
-                                onClick = {this.removeDoc}>
+                                onClick = {this.removeDocument}>
                                     <Icon name = 'trash' />
                                     Delete
                             </Button>

@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 import './css/MainPage.css';
 
-import { Segment, Menu, Grid, Responsive, Container } from 'semantic-ui-react';
+import { Segment, Menu, Grid, Responsive, Container, Button, Icon, Modal, Input, Dimmer, Loader, Divider } from 'semantic-ui-react';
 
 import Header from './Header';
 import DataViewer from './DataViewer';
@@ -12,36 +12,15 @@ import db from './utils/db';
 class MainPage extends Component {
     state = {
         sidebar: false,
-        collections: [
-            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-        ],
-        docs: [{
-            _id: 'abc',
-            abc: 6,
-            dsa: 'dsa',
-            zxc: ['dsa', 'dsa'],
-            nested: {
-                afs: 'dsa',
-                dsadsa: 'dsa',
-                nested2: {
-                    sda: 'dsa'
-                }
-            }
-        },
-        {
-            _id: 'dadsa',
-            dsa: 'dsaddas',
-            cxzc: 'dsasd',
-            a: [{
-                dadf: 'dsa',
-                dsa: 'fads'
-            },
-            {
-                dsa: 'dsa',
-                dsa: 'dsa'
-            }]
-        }],
-        activeMenuItem: ''
+        collections: [],
+        docs: [],
+        activeMenuItem: '',
+        collectionModal: false,
+        inputCollectionName: ''
+    };
+
+    handleChange = (event) => {
+        this.setState({ [event.target.name]: event.target.value });
     };
 
     getCollections = async (username, instance, database) => {
@@ -89,7 +68,7 @@ class MainPage extends Component {
     }
 
     getDocuments = async (username, instanceName, databaseName, collectionName) => {
-        let docs = [];
+        let docs = ['...'];
         this.setState({docs});
 
         const res = await db.get('/api/v1/' + username + '/' + instanceName + '/' + databaseName + '/' + collectionName + '/documents');
@@ -110,6 +89,34 @@ class MainPage extends Component {
             const collectionName = comp.name;
 
             this.getDocuments(username, instanceName, databaseName, collectionName);
+        }
+    };
+
+    openCollectionModal = () => {
+        this.setState({collectionModal: true});
+    };
+
+    closeCollectionModal = () => {
+        this.setState({collectionModal: false});
+    };
+
+    createCollection = async (event, comp) => {
+        if (this.props.username) {
+            this.setState({loadingCollectionModal: true});
+
+            const username = this.props.username;
+            const instanceName = this.props.match.params.instanceName;
+            const databaseName = this.props.match.params.databaseName;
+
+            const res = await db.post('/api/v1/' + username + '/' + instanceName + '/' + databaseName + '/collection', JSON.stringify({collection: this.state.inputCollectionName}));
+
+            if (res.ok && res.ok === 1) {
+                  this.getCollections(this.props.username, this.props.match.params.instanceName, this.props.match.params.databaseName);
+            }
+
+            this.setState({inputCollectionName: ''});
+            this.setState({loadingCollectionModal: false});
+            this.setState({collectionModal: false});
         }
     };
 
@@ -137,20 +144,78 @@ class MainPage extends Component {
                   />
 
                   <div className = 'content'>
-                        <Menu vertical secondary pointing color = 'green' className = 'collection-menu'>
+                        <Menu vertical secondary pointing size = 'large' color = 'green' className = 'collection-menu'>
                             <Menu.Item header>
                                 Collections
                             </Menu.Item>
                             { collectionList }
+                            <Menu.Item>
+                                <Button icon
+                                    labelPosition = 'left'
+                                    color = 'green'
+                                    onClick = {() => this.openCollectionModal()} >
+                                        <Icon name = 'plus' />
+                                            Collection
+                                </Button>
+                            </Menu.Item>
                         </Menu>
 
                         <div className = 'data-content'>
-                            <DataViewer
-                                docs = {this.state.docs}
-                                setDoc = {this.setDoc}
-                            />
+                            {
+                                this.state.activeMenuItem &&
+                                <Button color = 'red' icon labelPosition = 'left'> <Icon name = 'trash' /> Delete Collection </Button>
+                            }
+
+                            {
+                                this.state.activeMenuItem &&
+                                <Divider />
+                            }
+
+                            {
+                                this.state.docs && this.state.docs.length > 0 &&
+                                <DataViewer
+                                    docs = {this.state.docs}
+                                    setDoc = {this.setDoc}
+                                />
+                            }
+
+                            {
+                                this.state.activeMenuItem && this.state.docs && this.state.docs.length === 0 &&
+                                <Container style = {{textAlign: 'center'}}> <h3> No Documents </h3> </Container>
+                            }
                         </div>
                   </div>
+
+                  <Modal
+                      open = {this.state.collectionModal}
+                      size = 'fullscreen'
+                      closeIcon
+                      closeOnEscape = { true }
+                      closeOnRootNodeClick = { true }
+                      onClose = {() => this.closeCollectionModal()}
+                      style = {{
+                          marginTop: '40vh',
+                          maxWidth: 400
+                      }} >
+                          <Modal.Header>
+                              Create a new Collection
+                          </Modal.Header>
+                          <Modal.Content>
+                              <Input fluid
+                                  name = 'inputCollectionName'
+                                  placeholder = 'Collection Name'
+                                  value = {this.state.inputCollectionName}
+                                  onChange = {this.handleChange} />
+
+                              <Dimmer active = { this.state.loadingCollectionModal } >
+                                  <Loader content = 'Loading' />
+                              </Dimmer>
+                          </Modal.Content>
+                          <Modal.Actions>
+                              <Button onClick = {() => this.closeCollectionModal()} > Cancel </Button>
+                              <Button color = 'green' onClick = {this.createCollection} > Create Collection </Button>
+                          </Modal.Actions>
+                    </Modal>
             </div>
         );
     }

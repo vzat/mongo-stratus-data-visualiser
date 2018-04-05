@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 import './css/MainPage.css';
 
-import { Segment, Menu, Grid, Responsive, Container, Button, Icon, Modal, Input, Dimmer, Loader, Divider } from 'semantic-ui-react';
+import { Segment, Menu, Grid, Container, Button, Icon, Modal, Input, Dimmer, Loader, Divider, Label, Confirm } from 'semantic-ui-react';
 
 import Header from './Header';
 import DataViewer from './DataViewer';
@@ -16,7 +16,8 @@ class MainPage extends Component {
         docs: [],
         activeMenuItem: '',
         collectionModal: false,
-        inputCollectionName: ''
+        inputCollectionName: '',
+        loadingDeleteCollection: false
     };
 
     handleChange = (event) => {
@@ -120,6 +121,34 @@ class MainPage extends Component {
         }
     };
 
+    deleteCollection = async () => {
+        if (this.props.username && this.state.activeMenuItem) {
+            this.setState({loadingDeleteCollection: true});
+
+            const username = this.props.username;
+            const instanceName = this.props.match.params.instanceName;
+            const databaseName = this.props.match.params.databaseName;
+
+            const res = await db.delete('/api/v1/' + username + '/' + instanceName + '/' + databaseName + '/collection', JSON.stringify({collection: this.state.activeMenuItem}));
+
+            if (res.ok && res.ok === 1) {
+                  this.getCollections(this.props.username, this.props.match.params.instanceName, this.props.match.params.databaseName);
+
+                  this.setState({activeMenuItem: false});
+                  this.setState({confirmDeleteCollection: false});
+                  this.setState({loadingDeleteCollection: false});
+            }
+        }
+    };
+
+    openConfirmCollection = () => {
+        this.setState({confirmDeleteCollection: true});
+    };
+
+    closeConfirmCollection = () => {
+        this.setState({confirmDeleteCollection: false});
+    };
+
     render() {
         const { collections } = this.state;
         const collectionList = collections.map((collection, index) => (
@@ -144,7 +173,7 @@ class MainPage extends Component {
                   />
 
                   <div className = 'content'>
-                        <Menu vertical secondary pointing size = 'large' color = 'green' className = 'collection-menu'>
+                        <Menu vertical secondary pointing color = 'green' className = 'collection-menu'>
                             <Menu.Item header>
                                 Collections
                             </Menu.Item>
@@ -163,7 +192,24 @@ class MainPage extends Component {
                         <div className = 'data-content'>
                             {
                                 this.state.activeMenuItem &&
-                                <Button color = 'red' icon labelPosition = 'left'> <Icon name = 'trash' /> Delete Collection </Button>
+                                <Menu secondary>
+                                    <Menu.Item>
+                                        <Button icon
+                                            color = 'red'
+                                            labelPosition = 'left'
+                                            onClick = {() => this.openConfirmCollection()}>
+                                                <Icon name = 'trash' />
+                                                Delete Collection
+                                        </Button>
+                                    </Menu.Item>
+
+                                    <Menu.Item position = 'right'>
+                                        <Label size = 'large' color = 'blue'>
+                                            Documents
+                                            <Label.Detail> {this.state.docs.length} </Label.Detail>
+                                        </Label>
+                                    </Menu.Item>
+                                </Menu>
                             }
 
                             {
@@ -216,6 +262,35 @@ class MainPage extends Component {
                               <Button color = 'green' onClick = {this.createCollection} > Create Collection </Button>
                           </Modal.Actions>
                     </Modal>
+
+                    <Confirm
+                        open = {this.state.confirmDeleteCollection}
+                        onCancel = {() => this.closeConfirmCollection()}
+                        onConfirm = {() => this.deleteCollection()}
+                        header = 'Are you sure you want to delete this collection?'
+                        content = {
+                          <Modal.Content>
+                              All data will be permanently deleted. You cannot undo this action.
+                              <Dimmer active = { this.state.loadingDeleteCollection } >
+                                  <Loader content = 'Loading' />
+                              </Dimmer>
+                          </Modal.Content>
+                        }
+                        confirmButton = {
+                            <Button icon
+                                labelPosition = 'left'
+                                primary = {false}
+                                color = 'red'>
+                                    <Icon name = 'trash' />
+                                    Delete Collection
+                            </Button>
+                        }
+                        size = 'fullscreen'
+                        style = {{
+                            marginTop: '40vh',
+                            maxWidth: 800
+                        }}
+                    />
             </div>
         );
     }

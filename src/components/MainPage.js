@@ -60,12 +60,24 @@ class MainPage extends Component {
         this.setState({sidebar: !this.state.sidebar});
     }
 
-    setDoc = (doc, index) => {
-        let { docs } = this.state;
+    setDoc = async (doc, index) => {
+        if (this.props.username && this.state.activeMenuItem && this.state.docs.length > index) {
+            const username = this.props.username;
+            const instanceName = this.props.match.params.instanceName;
+            const databaseName = this.props.match.params.databaseName;
+            const collectionName = this.state.activeMenuItem;
 
-        if (index >= 0 && index < docs.length) {
-            docs[index] = doc;
-            this.setState({docs});
+            let tempDoc = {...doc}
+            delete tempDoc._id;
+
+            const res = await db.put('/api/v1/' + username + '/' + instanceName + '/' + databaseName + '/' + collectionName + '/documents', JSON.stringify({'ids': [this.state.docs[index]._id], documents: [tempDoc]}));
+
+            if (res.ok && res.ok === 1) {
+                // this.getDocuments(username, instanceName, databaseName, collectionName);
+                let { docs } = this.state;
+                docs[index] = doc;
+                this.setState({docs});
+            }
         }
     }
 
@@ -164,7 +176,31 @@ class MainPage extends Component {
             const res = await db.post('/api/v1/' + username + '/' + instanceName + '/' + databaseName + '/' + collectionName + '/documents', JSON.stringify({documents: [doc]}));
 
             if (res.ok && res.ok === 1) {
-                this.getDocuments(username, instanceName, databaseName, collectionName);
+                // this.getDocuments(username, instanceName, databaseName, collectionName);
+                // let { docs } = this.state;
+                // docs.push(doc);
+                // this.setState({docs});
+
+                const res = await db.get('/api/v1/' + username + '/' + instanceName + '/' + databaseName + '/' + collectionName + '/documents');
+
+                if (res.ok && res.ok === 1) {
+                    const data = res.data;
+                    let { docs } = this.state;
+
+                    for (let docNo = 0 ; docNo < data.length ; docNo ++) {
+                        let found = false;
+                        for (let localDocNo = 0 ; localDocNo < docs.length ; localDocNo ++) {
+                            if (docs[localDocNo]._id === data[docNo]._id) {
+                                found = true;
+                            }
+                        }
+                        if (!found) {
+                            docs.push(data[docNo]);
+                        }
+                    }
+
+                    this.setState({docs});
+                }
             }
         }
     };
@@ -187,7 +223,11 @@ class MainPage extends Component {
             const res = await db.delete('/api/v1/' + username + '/' + instanceName + '/' + databaseName + '/' + collectionName + '/documents', JSON.stringify({ids: [id]}));
 
             if (res.ok && res.ok === 1) {
-                this.getDocuments(username, instanceName, databaseName, collectionName);
+                // this.getDocuments(username, instanceName, databaseName, collectionName);
+                let { docs } = this.state;
+                docs.splice(docid, 1);
+                // docs[index] = doc;
+                this.setState({docs});
             }
         }
     };
@@ -260,13 +300,16 @@ class MainPage extends Component {
                                 <Divider />
                             }
 
-                            <DataViewer
-                                docs = {this.state.docs}
-                                setDoc = {this.setDoc}
-                                insertDocument = {this.insertDocument}
-                                removeDocument = {this.removeDocument}
-                                fetchingDocs = {this.state.fetchingDocs}
-                            />
+                            {
+                                this.state.activeMenuItem &&
+                                <DataViewer
+                                    docs = {this.state.docs}
+                                    setDoc = {this.setDoc}
+                                    insertDocument = {this.insertDocument}
+                                    removeDocument = {this.removeDocument}
+                                    fetchingDocs = {this.state.fetchingDocs}
+                                />
+                            }
                         </div>
                   </div>
 

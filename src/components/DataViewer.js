@@ -163,12 +163,27 @@ class DataViewer extends Component {
         }
     };
 
-    addDocument = () => {
-       this.props.insertDocument({});
+    addDocument = async () => {
+       await this.props.insertDocument({});
+
+       if (this.props.docs) {
+           await this.getDocs(this.props.docs);
+       }
     };
 
-    removeDocument = (event, comp) => {
-        this.props.removeDocument(comp.docid);
+    removeDocument = async (event, comp) => {
+        let { docLoading } = this.state;
+        docLoading[comp.docid] = true;
+        this.setState({docLoading});
+
+        await this.props.removeDocument(comp.docid);
+
+        if (this.props.docs) {
+            await this.getDocs(this.props.docs);
+        }
+
+        docLoading[comp.docid] = false;
+        this.setState({docLoading});
     }
 
     render() {

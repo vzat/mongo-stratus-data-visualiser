@@ -68,7 +68,6 @@ class DataViewer extends Component {
                 const json = docs[docIndex];
 
                 const doc = await JSON.parse(json);
-                console.log(doc);
 
                 // Show the doc is loading
                 docLoading[docIndex] = true;
@@ -241,6 +240,32 @@ class DataViewer extends Component {
                     this.refs['textarea-' + selectedDoc].ref.selectionStart = selectionStart + 1;
                     this.refs['textarea-' + selectedDoc].ref.selectionEnd = selectionStart + 1;
                 });
+
+                event.preventDefault();
+            }
+        }
+        if (event.key === '"') {
+            let { docs } = this.state;
+            const { selectedDoc } = this.state;
+            if (selectedDoc >= 0 && selectedDoc < docs.length) {
+                const selectionStart = this.refs['textarea-' + selectedDoc].ref.selectionStart;
+                const selectionEnd = this.refs['textarea-' + selectedDoc].ref.selectionEnd;
+
+                const doc = docs[selectedDoc];
+
+                if (selectionStart < doc.length && doc.charAt(selectionStart) === '"') {
+                    this.refs['textarea-' + selectedDoc].ref.selectionStart = selectionStart + 1;
+                    this.refs['textarea-' + selectedDoc].ref.selectionEnd = selectionStart + 1;
+                }
+                else {
+                    docs[selectedDoc] = doc.substring(0, selectionStart) + '""' + doc.substring(selectionEnd);
+
+                    this.setState({docs}, () => {
+                        // Change selection start and end after the state changed
+                        this.refs['textarea-' + selectedDoc].ref.selectionStart = selectionStart + 1;
+                        this.refs['textarea-' + selectedDoc].ref.selectionEnd = selectionStart + 1;
+                    });
+                }
 
                 event.preventDefault();
             }

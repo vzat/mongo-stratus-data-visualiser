@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import classNames from 'classnames';
 
-import { Input, Accordion, TextArea, Container, Segment, Sidebar, Menu, Button, Message, Icon } from 'semantic-ui-react'
+import { Input, Accordion, TextArea, Container, Segment, Sidebar, Menu, Button, Message, Icon, Divider } from 'semantic-ui-react'
 
 class DataViewer extends Component {
     state = {
@@ -164,14 +164,15 @@ class DataViewer extends Component {
     };
 
     addDocument = () => {
-       let { state } = this;
-       state.docs.push(JSON.stringify({}, null, 4));
-       state.sidebar.push(false);
-       state.docLoading.push(false);
-       state.docError.push('');
-       state.modifiedDocs.push(true);
-
-       this.setState(state);
+       this.props.insertDocument({});
+       // let { state } = this;
+       // state.docs.push(JSON.stringify({}, null, 4));
+       // state.sidebar.push(false);
+       // state.docLoading.push(false);
+       // state.docError.push('');
+       // state.modifiedDocs.push(true);
+       //
+       // this.setState(state);
     };
 
     render() {
@@ -273,14 +274,36 @@ class DataViewer extends Component {
 
         return (
             <div className="DataViewer">
-                <Segment.Group>
-                    { docsList }
-                </Segment.Group>
-                <Button fluid basic
-                    color = 'green'
-                    icon = 'plus'
-                    onClick = {() => this.addDocument()}
-                />
+                { !this.props.fetchingDocs && this.state.docs.length === 0 &&
+                    <Container style = {{textAlign: 'center'}}> <h3> No Documents </h3> <Divider hidden /> </Container>
+                }
+
+                { !this.props.fetchingDocs && this.state.docs.length > 0 &&
+                    <Segment.Group>
+                        { docsList }
+                    </Segment.Group>
+                }
+
+                { !this.props.fetchingDocs &&
+                    <Button fluid basic
+                        color = 'green'
+                        icon = 'plus'
+                        onClick = {() => this.addDocument()}
+                    />
+                }
+
+                { this.props.fetchingDocs &&
+                    <div>
+                        <Segment.Group>
+                            <Segment secondary style = {{ minHeight: '200px' }}>
+                                <Segment tertiary />
+                                <Segment tertiary />
+                                <Segment tertiary />
+                            </Segment>
+                        </Segment.Group>
+                    </div>
+                }
+
             </div>
         );
     }

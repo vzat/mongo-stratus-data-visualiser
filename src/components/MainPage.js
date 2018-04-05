@@ -17,7 +17,8 @@ class MainPage extends Component {
         activeMenuItem: '',
         collectionModal: false,
         inputCollectionName: '',
-        loadingDeleteCollection: false
+        loadingDeleteCollection: false,
+        fetchingDocs: false
     };
 
     handleChange = (event) => {
@@ -69,7 +70,9 @@ class MainPage extends Component {
     }
 
     getDocuments = async (username, instanceName, databaseName, collectionName) => {
-        let docs = ['...'];
+        this.setState({fetchingDocs: true});
+
+        let docs = [];
         this.setState({docs});
 
         const res = await db.get('/api/v1/' + username + '/' + instanceName + '/' + databaseName + '/' + collectionName + '/documents');
@@ -78,6 +81,8 @@ class MainPage extends Component {
             docs = res.data;
             this.setState({docs});
         }
+
+        this.setState({fetchingDocs: false});
     };
 
     menuClick = async (event, comp) => {
@@ -149,6 +154,25 @@ class MainPage extends Component {
         this.setState({confirmDeleteCollection: false});
     };
 
+    insertDocument = async (doc) => {
+        if (this.props.username) {
+            const username = this.props.username;
+            const instanceName = this.props.match.params.instanceName;
+            const databaseName = this.props.match.params.databaseName;
+            const collectionName = this.state.activeMenuItem;
+
+            const res = await db.post('/api/v1/' + username + '/' + instanceName + '/' + databaseName + '/' + collectionName + '/documents', JSON.stringify({documents: [doc]}));
+
+            if (res.ok && res.ok === 1) {
+                this.getDocuments(username, instanceName, databaseName, collectionName);
+            }
+        }
+    };
+
+    deleteDocument = () => {
+
+    };
+
     render() {
         const { collections } = this.state;
         const collectionList = collections.map((collection, index) => (
@@ -217,18 +241,12 @@ class MainPage extends Component {
                                 <Divider />
                             }
 
-                            {
-                                this.state.docs && this.state.docs.length > 0 &&
-                                <DataViewer
-                                    docs = {this.state.docs}
-                                    setDoc = {this.setDoc}
-                                />
-                            }
-
-                            {
-                                this.state.activeMenuItem && this.state.docs && this.state.docs.length === 0 &&
-                                <Container style = {{textAlign: 'center'}}> <h3> No Documents </h3> </Container>
-                            }
+                            <DataViewer
+                                docs = {this.state.docs}
+                                setDoc = {this.setDoc}
+                                insertDocument = {this.insertDocument}
+                                fetchingDocs = {this.state.fetchingDocs}
+                            />
                         </div>
                   </div>
 

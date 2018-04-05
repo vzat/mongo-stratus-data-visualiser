@@ -1,11 +1,9 @@
-/* https://stackoverflow.com/questions/39926080/fix-width-of-one-column-in-a-row-in-semantic-ui */
-/* Fix for the sui grid to support fixed column */
-.menu-column {
-    flex: 0 0 250px;
-}
-
 .data-content {
-    width: calc(100vw - 275px);
+    /* width: calc(100vw - 275px); */
+    margin-left: 15px;
+    margin-right: 15px;
+    margin-top: 15px;
+    width: 100%;
 }
 
 .doc-textarea {
@@ -13,7 +11,11 @@
     border: none;
     outline: none;
     font-family: monospace;
-    min-height: 100px;
+    min-height: 220px;
+}
+
+.error-message {
+    width: calc(100% - 150px);
 }
 
 .doc-textarea-default {
@@ -28,14 +30,28 @@
     color: green;
 }
 
+.doc-textarea-error {
+    color: FireBrick;
+}
+
 .doc-segment-default:hover .doc-textarea-default, .doc-segment-default:hover {
     background-color: #e6e6e6;
 }
 
-/* .doc-segment:hover .doc-textarea, .doc-segment:hover {
-    background-color: #e6e6e6;
+/* Reference: https://stackoverflow.com/questions/90178/make-a-div-fill-the-height-of-the-remaining-screen-space */
+/* Make page take the whole height */
+.MainPage {
+    min-height: 100vh;
+    display: flex;
+    flex-flow: column;
 }
 
-.doc-textarea:focus {
-    color: green;
-} */
+.content {
+    min-height: 100%;
+    flex: 1 1 auto;
+
+    display: flex;
+    flex-flow: row;
+
+    border: 1px solid LightGray;
+}

@@ -8,7 +8,7 @@ import MainPage from './MainPage';
 
 class App extends Component {
     state = {
-        username: '',
+        username: undefined,
         creatingDB: false
     };
 

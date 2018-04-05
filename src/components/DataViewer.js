@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import classNames from 'classnames';
 
-import { Input, Accordion, TextArea, Container, Segment, Sidebar, Menu, Button, Message } from 'semantic-ui-react'
+import { Input, Accordion, TextArea, Container, Segment, Sidebar, Menu, Button, Message, Icon } from 'semantic-ui-react'
 
 class DataViewer extends Component {
     state = {
@@ -31,6 +31,7 @@ class DataViewer extends Component {
         this.setState({docLoading});
         this.setState({docError});
         this.setState({modifiedDocs});
+        this.setState({selectedDoc: undefined});
     };
 
     componentDidMount = () => {
@@ -123,15 +124,15 @@ class DataViewer extends Component {
         const docIndex = comp.docid;
         if (docIndex >= 0 && docIndex < docs.length) {
             docs[docIndex] = JSON.stringify(propDocs[docIndex], null, 4);
-            sidebar[docIndex] = false;
+            // sidebar[docIndex] = false;
             docError[docIndex] = '';
             modifiedDocs[docIndex] = false;
 
             this.setState({docs});
-            this.setState({sidebar});
+            // this.setState({sidebar});
             this.setState({docError});
             this.setState({modifiedDocs});
-            this.setState({selectedDoc: undefined});
+            // this.setState({selectedDoc: undefined});
         }
     };
 
@@ -164,7 +165,8 @@ class DataViewer extends Component {
                 'doc-textarea': true,
                 'doc-textarea-default': this.state.selectedDoc !== docIndex,
                 'doc-textarea-selected': this.state.selectedDoc === docIndex,
-                'doc-textarea-modified': this.state.modifiedDocs[docIndex]
+                'doc-textarea-modified': this.state.modifiedDocs[docIndex],
+                'doc-textarea-error': this.state.docError[docIndex]
             });
         });
 
@@ -186,38 +188,47 @@ class DataViewer extends Component {
                     vertical
                     borderless >
                         <Menu.Item>
-                            <Button fluid
+                            <Button fluid icon
+                                labelPosition = 'left'
                                 disabled = {!this.state.modifiedDocs[docIndex]}
                                 docid = {docIndex}
                                 color = 'green'
                                 onClick = {this.saveDoc}>
+                                    <Icon name = 'save' />
                                     Save
                             </Button>
                         </Menu.Item>
                         <Menu.Item>
-                            <Button fluid
+                            <Button fluid icon
+                                labelPosition = 'left'
                                 disabled = {!this.state.modifiedDocs[docIndex]}
                                 docid = {docIndex}
-                                color = 'red'
+                                color = 'yellow'
                                 onClick = {this.revertDoc}>
-                                    Revert
+                                    <Icon name = 'repeat' />
+                                     Revert
                             </Button>
                         </Menu.Item>
                         <Menu.Item>
-                            <Button fluid
+                            <Button fluid icon
+                                labelPosition = 'left'
+                                docid = {docIndex}
+                                color = 'red'
+                                onClick = {this.removeDoc}>
+                                    <Icon name = 'trash' />
+                                    Delete
+                            </Button>
+                        </Menu.Item>
+                        <Menu.Item>
+                            <Button fluid icon
+                                labelPosition = 'left'
                                 docid = {docIndex}
                                 onClick = {() => {this.hideSidebar(docIndex)}}>
+                                    <Icon name = 'hide' />
                                     Hide
                             </Button>
                         </Menu.Item>
-                        {
-                            this.state.docError[docIndex] &&
-                            <Menu.Item>
-                                <Message negative size = 'small'>
-                                    { this.state.docError[docIndex] }
-                                </Message>
-                            </Menu.Item>
-                        }
+
                 </Sidebar>
                 <Sidebar.Pusher>
                     <Segment fluid loading = {this.state.docLoading[docIndex]} className = {segmentClasses[docIndex]}>
@@ -230,6 +241,14 @@ class DataViewer extends Component {
                             onChange = {this.changeDoc}
                             onFocus = {() => {this.showSidebar(docIndex)}}
                         />
+                        {
+                            this.state.docError[docIndex] &&
+                            <Menu.Item>
+                                <Message negative size = 'small' className = 'error-message'>
+                                    { this.state.docError[docIndex] }
+                                </Message>
+                            </Menu.Item>
+                        }
                     </Segment>
                 </Sidebar.Pusher>
             </Sidebar.Pushable>

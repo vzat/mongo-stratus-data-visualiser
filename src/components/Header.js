@@ -91,6 +91,21 @@ class ServerList extends Component {
           </Breadcrumb>
       );
 
+      logout = async (event, comp) => {
+          if (this.props.username) {
+              const res = await fetch('/api/v1/internal/' + this.props.username + '/logout', {
+                  method: 'POST',
+                  credentials: 'include',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  }
+              });
+
+              // Reload the page for the logout to take effect
+              window.location.reload();
+          }
+      };
+
       return (
         <div className = "Header">
             <Segment attached = 'top'>
@@ -105,8 +120,7 @@ class ServerList extends Component {
                     <Icon name = 'user circle' />
                     <Dropdown text = {username} direction = 'left' inline compact>
                         <Dropdown.Menu>
-                            <Dropdown.Item text = 'Account Details' />
-                            <Dropdown.Item text = 'Logout' />
+                            <Dropdown.Item key = 'Logout' text = 'Logout' value = 'Logout' onClick = {this.logout} />
                         </Dropdown.Menu>
                     </Dropdown>
                 </div>

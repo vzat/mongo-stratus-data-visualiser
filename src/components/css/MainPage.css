@@ -1,0 +1,58 @@
+.data-content {
+    /* width: calc(100vw - 275px); */
+    margin-left: 15px;
+    margin-right: 15px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.doc-textarea {
+    width: calc(100% - 150px);
+    border: none;
+    outline: none;
+    font-family: monospace;
+    min-height: 220px;
+}
+
+.error-message {
+    width: calc(100% - 150px);
+}
+
+.doc-textarea-default {
+    cursor: pointer;
+}
+
+.doc-textarea-selected {
+    cursor: text;
+}
+
+.doc-textarea-modified {
+    color: green;
+}
+
+.doc-textarea-error {
+    color: FireBrick;
+}
+
+.doc-segment-default:hover .doc-textarea-default, .doc-segment-default:hover {
+    background-color: #e6e6e6;
+}
+
+/* Reference: https://stackoverflow.com/questions/90178/make-a-div-fill-the-height-of-the-remaining-screen-space */
+/* Make page take the whole height */
+.MainPage {
+    min-height: 100vh;
+    display: flex;
+    flex-flow: column;
+}
+
+.content {
+    min-height: 100%;
+    flex: 1 1 auto;
+
+    display: flex;
+    flex-flow: row;
+
+    border: 1px solid LightGray;
+}

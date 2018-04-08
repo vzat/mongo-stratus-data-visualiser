@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 import './css/Header.css';
 
-import { Segment, Image, Dropdown, Breadcrumb, Icon } from 'semantic-ui-react';
+import { Segment, Image, Dropdown, Loader, Transition, Button, Breadcrumb, Icon } from 'semantic-ui-react';
 
 import logo from './resources/images/MongoStratusLogo.svg';
 
@@ -11,75 +11,53 @@ class ServerList extends Component {
       notificationText: 'Your instance is being created...'
   };
 
-  // handleNotification = (visible, text) => {
-  //     this.setState({
-  //         notification: visible,
-  //         notificationText: text
-  //     });
-  // };
+  handleNotification = (visible, text) => {
+      this.setState({
+          notification: visible,
+          notificationText: text
+      });
+  };
 
   componentDidMount = () => {
       // Show notification if a db is being created
-      // this.checkDB();
+      this.checkDB();
   };
 
-  // checkDB = async () => {
-  //     // if (this.props.notification) {
-  //     //     const username = this.props.username;
-  //     //     const database = this.props.db;
-  //     //
-  //     //     const res = await fetch('/api/v1/internal/exists/' + username + '/' + database, {
-  //     //         method: 'GET',
-  //     //         headers: {
-  //     //             'Content-Type': 'application/json'
-  //     //         }
-  //     //     });
-  //     //
-  //     //     const json = await res.json();
-  //     //
-  //     //     if (json.ok && json.ok === 1) {
-  //     //         this.props.setCreatingDB(false);
-  //     //     }
-  //     // }
-  //
-  //     const res = await fetch('/api/v1/internal/show/notification', {
-  //         method: 'GET',
-  //         credentials: 'include',
-  //         headers: {
-  //             'Content-Type': 'application/json'
-  //         }
-  //     });
-  //
-  //     const json = await res.json();
-  //
-  //     if (json.ok && json.ok === 1 && json.notification && json.notification === 1) {
-  //         this.props.setCreatingDB(true);
-  //     }
-  //     else {
-  //         this.props.setCreatingDB(false);
-  //
-  //         if (json.refresh && json.refresh === 1 && this.props.setRefreshServerList !== undefined) {
-  //             this.props.setRefreshServerList(true);
-  //         }
-  //     }
-  //
-  //     setTimeout(this.checkDB, 10000);
-  // };
+  checkDB = async () => {
+      const res = await fetch('/api/v1/internal/show/notification', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+              'Content-Type': 'application/json'
+          }
+      });
 
-  // hideNotification = async () => {
-  //     await fetch('/api/v1/internal/hide/notification', {
-  //         method: 'POST',
-  //         credentials: 'include',
-  //         headers: {
-  //             'Content-Type': 'application/json'
-  //         }
-  //     });
-  // };
+      const json = await res.json();
+
+      if (json.ok && json.ok === 1 && json.notification && json.notification === 1) {
+          this.props.setCreatingDB(true);
+      }
+      else {
+          this.props.setCreatingDB(false);
+      }
+
+      setTimeout(this.checkDB, 10000);
+  };
+
+  hideNotification = async () => {
+      await fetch('/api/v1/internal/hide/notification', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+              'Content-Type': 'application/json'
+          }
+      });
+  };
 
   render() {
       const username = this.props.username;
-      // const { notificationText } = this.state;
-      // const { notification } = this.props;
+      const { notificationText } = this.state;
+      const { notification } = this.props;
 
       const breadcrumb = (
           <Breadcrumb className = 'breadcrumb-nav'>
@@ -133,7 +111,17 @@ class ServerList extends Component {
                     </Dropdown>
                 </div>
             </Segment>
-
+            <Transition.Group animation = 'fade down' duration = {500} >
+                { notification &&
+                    <Segment attached = 'bottom' color = 'green' inverted textAlign = 'center' size = 'small' >
+                        <Loader active inline indeterminate inverted size = 'small' />
+                        <div className = 'notification-text'>
+                            { notificationText }
+                        </div>
+                        <Button compact floated = 'right' icon = 'close' size = 'tiny' color = 'green' onClick = { this.hideNotification } />
+                    </Segment>
+                }
+            </Transition.Group>
             { breadcrumb }
         </div>
       );

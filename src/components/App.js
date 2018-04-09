@@ -26,7 +26,7 @@ class App extends Component {
         const json = await res.json();
 
         if (!json.ok || json.ok === 0) {
-            window.location = 'http://localhost:3001/login';
+            window.location = 'http://login.mongostratus.me/login';
         }
 
         this.setState({username: json.username});

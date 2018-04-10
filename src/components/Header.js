@@ -54,6 +54,21 @@ class ServerList extends Component {
       });
   };
 
+  logout = async (event, comp) => {
+      if (this.props.username) {
+          const res = await fetch('/api/v1/internal/' + this.props.username + '/logout', {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                  'Content-Type': 'application/json'
+              }
+          });
+
+          // Reload the page for the logout to take effect
+          window.location.reload();
+      }
+  };
+
   render() {
       const username = this.props.username;
       const { notificationText } = this.state;
@@ -62,7 +77,7 @@ class ServerList extends Component {
       const breadcrumb = (
           <Breadcrumb className = 'breadcrumb-nav'>
               <Breadcrumb.Section
-                  href = '/'
+                  href = 'http://localhost:4001/'
                   active = { this.props.instanceName === undefined }>
                       Home
               </Breadcrumb.Section>
@@ -72,7 +87,7 @@ class ServerList extends Component {
               }
               { this.props.instanceName &&
                   <Breadcrumb.Section
-                      href = {'/instance/' + this.props.instanceName}
+                      href = {'http://localhost:4001/instance/' + this.props.instanceName}
                       active = { this.props.databaseName === undefined } >
                           { this.props.instanceName }
                   </Breadcrumb.Section>
@@ -91,28 +106,13 @@ class ServerList extends Component {
           </Breadcrumb>
       );
 
-      logout = async (event, comp) => {
-          if (this.props.username) {
-              const res = await fetch('/api/v1/internal/' + this.props.username + '/logout', {
-                  method: 'POST',
-                  credentials: 'include',
-                  headers: {
-                      'Content-Type': 'application/json'
-                  }
-              });
-
-              // Reload the page for the logout to take effect
-              window.location.reload();
-          }
-      };
-
       return (
         <div className = "Header">
             <Segment attached = 'top'>
                 <Image
                     src = {logo}
                     size = 'small'
-                    href = '/'
+                    href = 'http://localhost:4001/'
                     verticalAlign = 'middle'
                 />
 

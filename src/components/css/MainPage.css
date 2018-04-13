@@ -40,12 +40,13 @@
 }
 
 /* Reference: https://stackoverflow.com/questions/90178/make-a-div-fill-the-height-of-the-remaining-screen-space */
-/* Make page take the whole height */
+/* Make page use the whole height */
 .MainPage {
     min-height: 100vh;
     display: flex;
     flex-flow: column;
 }
+/* End Reference */
 
 .content {
     min-height: 100%;
